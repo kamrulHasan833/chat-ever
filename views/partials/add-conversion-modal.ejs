@@ -1,0 +1,126 @@
+<div id="modal-wrapper" class="modal-wrapper">
+  <div class="modal">
+    <a href="#" class="modal-close" onclick="hideModal()">+</a>
+    <div class="modal-title">
+      <h2>Create New Conversation</h2>
+    </div>
+    <div class="modal-body">
+      <form>
+        <input
+          id="searchUser"
+          type="text"
+          placeholder="search user by name, email or mobile"
+          name="username"
+          id="username"
+          autocomplete="off"
+        />
+        <p class="error"></p>
+        <div id="search-users" class="search_users"></div>
+        <input type="submit" value="Submit" class="hide" />
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  // variables
+  const modal = document.getElementById("modal-wrapper");
+  const searchInput = document.getElementById("searchUser");
+  const searchedUserList = document.getElementById("search-users");
+  const contentType = { "Content-type": "application/json; charset=UTF-8" };
+  const timeout = 500;
+  let searchAfter;
+
+  // show modal
+  function showModal() {
+    modal.style.display = "block";
+  }
+
+  // hide modal
+  function hideModal() {
+    modal.style.display = "none";
+    searchedUserList.style.display = "none";
+    searchInput.value = "";
+  }
+
+  // success toast
+  const conversationSuccessToast = Toastify({
+    text: "Conversation successfully created!",
+    duration: 1000,
+  });
+  // failure toast
+  const conversationFailureToast = Toastify({
+    text: "Conversation couldn't be created!",
+    duration: 1000,
+  });
+
+  // serach making
+  searchInput.addEventListener("keyup", function (e) {
+    clearTimeout(searchAfter);
+    searchedUserList.style.display = "none";
+    if (searchInput.value) {
+      searchAfter = setTimeout(searchUsers, timeout);
+    }
+  });
+
+  // serach breaking
+  searchInput.addEventListener("keydown", function (e) {
+    clearTimeout(searchAfter);
+  });
+
+  // serach users
+  async function searchUsers() {
+    const response = await fetch("/inbox/search", {
+      method: "POST",
+      headers: contentType,
+      body: JSON.stringify({
+        username: searchInput.value,
+      }),
+    });
+    const users = await response.json();
+
+    if (Array.isArray(users)) {
+      let createHtml = "<ul>";
+      users.forEach((user) => {
+        createHtml += `<li onclick="createConversation('${user._id}','${user.name}','${user.avatar}')">
+                            <div class="user">
+                              <div class="avatar"><img src="../../uploads/avatar/${user.avatar}" alt="${user.name}"></div>
+                              <p class="username">${user.name}</p>
+                            </div>
+                        </li>`;
+      });
+      createHtml += "</ul>";
+      searchedUserList.innerHTML = createHtml;
+      searchedUserList.style.display = "block";
+    } else {
+      let createHtml = "<p>No result found!</p>";
+      searchedUserList.innerHTML = createHtml;
+      searchedUserList.style.display = "block";
+    }
+  }
+
+  // create convesation
+  async function createConversation(id, name, avatar) {
+    const response = await fetch("/inbox/conversation", {
+      method: "POST",
+      headers: contentType,
+      body: JSON.stringify({
+        participant: {
+          id,
+          name,
+          avatar,
+        },
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.errors) {
+      (searchedUserList.style.display = "none"), (searchInput.value = name);
+      conversationSuccessToast.showToast();
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      conversationFailureToast.showToast();
+    }
+  }
+</script>

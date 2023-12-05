@@ -1,0 +1,236 @@
+<!-- include header -->
+<%- include('./partials/header.ejs') %>
+    <div id="chat-container">
+      <div id="search-container">
+        <input type="text" placeholder="Search" />
+      
+      </div>
+      <div id="conversation-list">
+     <% if(conversations && (conversations.length > 0)){ %>
+      <% conversations.forEach(conversation=>{ if(conversation.creator.id == loggedinUser.id){ %>
+      
+      <div class="conversation" onclick="getMessages('<%= conversation._id %>', `<%= JSON.stringify(conversation.participant) %>`,`<%= JSON.stringify(loggedinUser) %>`)">
+        <img src="../uploads/avatar/<%= conversation.participant.avatar %>" alt="<%= conversation.participant.name %>" />
+        <div class="title-text"><%= conversation.participant.name %></div>
+        <div class="created-date"> <%= moment(conversation.last_updated).fromNow() %> </div>
+      </div>
+      <% }else{ %>
+        <div class="conversation " onclick="getMessages('<%= conversation._id %>', `<%= JSON.stringify(conversation.creator) %>`,`<%= JSON.stringify(loggedinUser) %>`)">
+          <img src="../uploads/avatar/<%= conversation.creator.avatar %>" alt="<%= conversation.creator.name %>" />
+          <div class="title-text"><%= conversation.creator.name %></div>
+          <div class="created-date"><%= moment(conversation.last_updated).fromNow() %></div>
+         
+        </div>
+
+     
+      <% }})} %>
+          <!-- show no conversation placeholder image for 0 conversations -->
+          <% if( conversations.length === 0) { %>
+            <div class="nothing"><img src="./images/no-conversation.svg"></div>
+          <% } %>
+      </div>
+      <div id="new-message-container" class="new-message-container">
+        <a href="#" onclick="showModal()">+</a>
+      </div>
+      <div id="chat-title">
+        <span id="conversation-partner"></span>
+        <img src="./images/trash.png" alt="Delete Conversation" onclick="deleteConversation()" />
+      </div>
+      <div id="chat-message-list">
+      
+   
+      </div>
+      <form id="chat-form"  enctype="multipart/form-data">
+       <label for="attachment">
+        <img src="./images/attachment.png" alt="Add Attachment" />
+       </label>
+        <input type="file" multiple name="attachment" class="hide" id="attachment"/>
+        <input type="text" placeholder="Type a message" name="message"/>
+      </form>
+    </div>
+
+   <%- include('./partials/add-conversion-modal.ejs') %>
+   
+    <!-- import socket io client from cdn -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+
+<script>
+  const form = document.getElementById('chat-form')
+  const messageContainer = document.getElementById('chat-message-list');
+  let messageAttachments = [];
+ 
+  let participant =null;
+  let conversationId = null;
+
+ 
+  
+  // get and display messages
+  async function getMessages(id, participantDetails ,loggedinUser){
+  ;
+ 
+    const messForm = document.getElementById('chat-form');
+    messForm.style.visibility= "visible";
+    participant = JSON.parse(participantDetails);
+    const signedInUser = JSON.parse(loggedinUser)
+    conversationId = id;
+    messageAttachments=[]
+    messageContainer.innerHTML = ''
+    messageAttachments=[]
+
+    // display reciever name
+    displayRecieverName(participant.name)
+const res = await fetch(`/inbox/message/${conversationId}`);
+const {messages} = await res.json()
+
+
+if(Array.isArray(messages) && messages.length>0){
+messages.forEach(message=>{
+
+  const currentUser=message?.sender.id === signedInUser.id ? true : false; 
+
+messageContainer.innerHTML += `
+<div class="message-row ${currentUser ? 'you-message' :'other-message'}">
+<div class="message-content">
+           ${currentUser ?'' : ` <img src="https://chat-ever.vercel.app/uploads/avatar/${message.sender?.avatar && message.sender?.avatar}" alt="Sumit" />`}
+         <div>${message.text ? `<div class="message-text">${message.text}</div>`:'' }
+         <div class="attachments">${message.attachments.length > 0 ? message.attachments.map((img)=>img && `<img src="https://chat-ever.vercel.app/uploads/attachments/${img}" alt="">`) : ''}</div>
+         
+            ${message.text || message.attachments.length>0 ? `<div class="message-time">${moment(message.post_time).fromNow()}</div>`:''}</div>
+          </div>
+        </div>
+       
+`
+if(message?.attachments.length>0){
+  message.attachments.forEach(img=>messageAttachments.push(img))
+}
+})
+}else{
+messageContainer.innerHTML += `<div class="nothing">select a conversation</div>`
+}
+
+   
+  }
+  
+  // display reciever name
+  function displayRecieverName(participantName){ 
+   const chatTile = document.getElementById('conversation-partner');
+   chatTile.innerHTML = '';
+chatTile.innerHTML = participantName
+  }
+  //  initialize socket.io
+  const socket = io(`<%= process.env.APP_URL %>`);
+  
+// get and display message by socket
+  socket.on('new-message',message=>{
+
+   const nextMessage= messageContainer.querySelector('.message-row:first-child');
+   const children = messageContainer.children;
+   const nothing = messageContainer.children[0];
+   const loggedinUserId = `<%= loggedinUser.id %>`;
+  
+   if(conversationId === message.conversation_id){
+    const currentUser = message.sender.id ===loggedinUserId ? true:false;
+    const messageHTML =  document.createElement("div");
+    messageHTML.classList.add('message-row',`${currentUser ? 'you-message' :'other-message'}`);
+    messageHTML.innerHTML =    `
+          <div class="message-content">
+           ${currentUser ?'' : ` <img src="https://chat-ever.vercel.app/uploads/avatar/${message.sender?.avatar && message.sender?.avatar}" alt="Sumit" />`}
+         <div>${message.text ? `<div class="message-text">${message.text}</div>`:'' }
+         <div class="attachments">${message.attachments.length > 0 ? message.attachments.map((img)=>img && `<img src="https://chat-ever.vercel.app/uploads/attachments/${img}" alt="">`) : ''}</div>
+         
+            ${message.text || message.attachments.length>0 ? `<div class="message-time">${moment(message.post_time).fromNow()}</div>`:''}</div>
+          </div>
+`;
+
+  if(nextMessage){
+  
+    nextMessage.insertAdjacentElement('beforeBegin', messageHTML);
+   
+  }else{
+   nothing.insertAdjacentElement('beforeBegin', messageHTML);
+    nothing.classList.add('hide')
+  }
+  message?.attachments.forEach(img=>{
+  if(!messageAttachments.includes(img)){
+    messageAttachments.push(img);
+   
+  }
+})
+   } 
+  }) 
+
+   // delete conversation
+   async function deleteConversation(){
+    const deleteFailedMess= Toastify({
+      text: "Conversation wasn't deleted!",
+      duration: 1000
+    });
+    const succesMess = Toastify({
+      text: "Conversation deleted successfully!",
+      duration: 1000
+    });
+    const messageForSelectId = Toastify({
+      text: "Please, select a conversation first!",
+      duration: 2000
+    });
+   
+   if(conversationId){
+    const res = await fetch(`/inbox/conversation/${conversationId}`,{
+      method:'DELETE',
+      body:JSON.stringify({attachments: messageAttachments}),
+      headers:{ "Content-type": "application/json; charset=UTF-8" }
+    });
+    
+    const data= await res.json();
+   
+  
+   
+    if(data.errors){
+      deleteFailedMess.showToast()
+    }else{
+      succesMess.showToast();
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    }
+   }else{
+    messageForSelectId.showToast()
+   }
+  }
+  // create message
+form.onsubmit= async (e)=>{
+  e.preventDefault();
+const inputFiels = form.querySelectorAll('input')
+
+
+
+
+  const formData = new FormData(form);
+formData.append('participant',JSON.stringify(participant))
+  formData.append('conversationId',conversationId);
+  inputFiels.forEach(inputField=>inputField.value = ''
+  )
+  const res = await fetch('/inbox/message',{
+    method:"POST",
+    body:formData,
+   
+  })
+ 
+  const data = await res.json();
+  const error= data?.errors ? data.errors : null;
+
+
+  // show errors to create message
+  const toastifyPayload= {
+  text: error?.avatar ? error.avatar.msg: error?.common.msg,
+  duration: 3000
+}
+let messageCreatedError=Toastify(toastifyPayload);
+if(error){
+
+  messageCreatedError.showToast()
+}
+}
+</script>
+  </body>
+</html>

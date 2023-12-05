@@ -1,0 +1,74 @@
+<!-- include header -->
+<%- include('./partials/header.ejs') %>
+
+    <div class="manageUser-container">
+      <div id="title">
+        <h2>Manage Users</h2>
+      </div>
+
+      <div class="new-message-container new-user">
+        <a href="#" onclick="openModal()">+</a>
+      </div>
+
+      <div id="users-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Manage</th>
+            </tr>
+          </thead>
+        
+          <tbody id="users-table">
+            <% users.forEach(user=>{ %>
+            <tr id="<%= user._id %>">
+              <td class="name">
+                <% if(user.avatar){ %>
+                <img src="./uploads/avatar/<%= user.avatar %> " />
+                <% }else{ %>
+                  <img src="./images/nophoto.png" />
+                  <% } %>
+                <span><%= user.name %></span>
+              </td>
+              <td><%= user.email %></td>
+              <td class="manage" onclick="deleteUser('<%= user._id %>')">
+                <img src="./images/trash.png" alt="Delete" />
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  <%- include('./partials/user-form-modal.ejs') %>
+  <script>
+    const successMess = Toastify({
+      text:'User was deleted successfully!',
+      duration: 1000 * 60
+    })
+    const failedMess = Toastify({
+      text:"User wasn't deleted.",
+      duration:1000*60
+    })
+   async function deleteUser(userId){
+     const response = await fetch(`https://chat-ever.vercel.app/users/${userId}`,{
+      method:'DELETE'
+     });
+     const result = response.json();
+   
+     if(result.errors){
+      failedMess.showToast()
+     }else{
+      successMess.showToast()
+      
+ // reload the page
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+     }
+    }
+  </script>
+  </body>
+</html>
