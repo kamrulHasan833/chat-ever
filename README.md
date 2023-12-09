@@ -1,10 +1,10 @@
 # Chat Ever
 
-## [Project Live Link](https://unity-mates.web.app/)
+## [Project Live Link](https://chat-ever.vercel.app/)
 
-Click here to see project demo: [https://unity-mates.web.app/](https://unity-mates.web.app/)](https://unity-mates.web.app/)
+Click here to see project demo: [https://chat-ever.vercel.app/](https://chat-ever.vercel.app/)
 
-## [Unity Mates server Git Repo Link](https://github.com/kamrulHasan833/unity-mates-server.git)
+
 
 ###### The five features of my project are given below:
 
