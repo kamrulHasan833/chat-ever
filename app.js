@@ -4,7 +4,7 @@ const http = require("http");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const moment = require("moment");
-
+const cors = require("cors");
 // internal imports
 const loginRouter = require("./routers/loginRouter");
 const usersRouter = require("./routers/usersRouter");
@@ -16,6 +16,7 @@ const {
 } = require("./middlewares/common/errorHandler");
 // express app
 const app = express();
+app.use(cors());
 
 // initialize socket.io
 const server = http.createServer(app);

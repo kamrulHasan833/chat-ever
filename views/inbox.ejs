@@ -91,9 +91,9 @@ messages.forEach(message=>{
 messageContainer.innerHTML += `
 <div class="message-row ${currentUser ? 'you-message' :'other-message'}">
 <div class="message-content">
-           ${currentUser ?'' : ` <img src="https://chat-ever.vercel.app/uploads/avatar/${message.sender?.avatar && message.sender?.avatar}" alt="Sumit" />`}
+           ${currentUser ?'' : ` <img src="http://localhost:5000/uploads/avatar/${message.sender?.avatar && message.sender?.avatar}" alt="Sumit" />`}
          <div>${message.text ? `<div class="message-text">${message.text}</div>`:'' }
-         <div class="attachments">${message.attachments.length > 0 ? message.attachments.map((img)=>img && `<img src="https://chat-ever.vercel.app/uploads/attachments/${img}" alt="">`) : ''}</div>
+         <div class="attachments">${message.attachments.length > 0 ? message.attachments.map((img)=>img && `<img src="http://localhost:5000/uploads/attachments/${img}" alt="">`) : ''}</div>
          
             ${message.text || message.attachments.length>0 ? `<div class="message-time">${moment(message.post_time).fromNow()}</div>`:''}</div>
           </div>
@@ -134,9 +134,9 @@ chatTile.innerHTML = participantName
     messageHTML.classList.add('message-row',`${currentUser ? 'you-message' :'other-message'}`);
     messageHTML.innerHTML =    `
           <div class="message-content">
-           ${currentUser ?'' : ` <img src="https://chat-ever.vercel.app/uploads/avatar/${message.sender?.avatar && message.sender?.avatar}" alt="Sumit" />`}
+           ${currentUser ?'' : ` <img src="http://localhost:5000/uploads/avatar/${message.sender?.avatar && message.sender?.avatar}" alt="Sumit" />`}
          <div>${message.text ? `<div class="message-text">${message.text}</div>`:'' }
-         <div class="attachments">${message.attachments.length > 0 ? message.attachments.map((img)=>img && `<img src="https://chat-ever.vercel.app/uploads/attachments/${img}" alt="">`) : ''}</div>
+         <div class="attachments">${message.attachments.length > 0 ? message.attachments.map((img)=>img && `<img src="http://localhost:5000/uploads/attachments/${img}" alt="">`) : ''}</div>
          
             ${message.text || message.attachments.length>0 ? `<div class="message-time">${moment(message.post_time).fromNow()}</div>`:''}</div>
           </div>
